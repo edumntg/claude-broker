@@ -1,0 +1,19 @@
+services:
+  lavinmq:
+    image: cloudamqp/lavinmq:latest
+    container_name: cbroker-lavinmq
+    restart: unless-stopped
+    ports:
+      - "${CBROKER_AMQP_PORT:-5672}:5672"
+      - "${CBROKER_MGMT_PORT:-15672}:15672"
+    volumes:
+      - cbroker-data:/var/lib/lavinmq
+    healthcheck:
+      test: ["CMD", "lavinmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cbroker-data:
+    name: cbroker-data

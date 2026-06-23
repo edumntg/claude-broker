@@ -1,0 +1,59 @@
+{
+  "name": "claude-broker",
+  "version": "0.1.0",
+  "description": "AMQP-based inter-session messaging for Claude Code (cbroker). PTY-wraps claude and injects peer messages from a LavinMQ queue, letting multiple Claude Code sessions coordinate on the same machine.",
+  "license": "MIT",
+  "author": "Eduardo Montilva <https://github.com/edumntg>",
+  "homepage": "https://github.com/edumntg/claude-broker#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edumntg/claude-broker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/edumntg/claude-broker/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "anthropic",
+    "ai",
+    "ai-agents",
+    "multi-agent",
+    "agent-communication",
+    "amqp",
+    "lavinmq",
+    "rabbitmq",
+    "pty",
+    "cli",
+    "messaging",
+    "broker",
+    "ipc",
+    "llm",
+    "developer-tools"
+  ],
+  "type": "module",
+  "bin": {
+    "cbroker": "bin/cbroker"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli/index.js",
+    "clean": "rm -rf dist",
+    "postinstall": "node scripts/fix-pty-perms.mjs"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.4",
+    "commander": "^12.1.0",
+    "node-pty": "^1.1.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.5",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

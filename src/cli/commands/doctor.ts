@@ -9,26 +9,35 @@ export function registerDoctor(program: Command): void {
   program
     .command('doctor')
     .description('Diagnose cbroker installation and broker state')
-    .action(async () => {
-      // Required checks — count toward exit code
+    .action(async (_opts, cmd) => {
+      const explicitUrl = (cmd.parent?.opts() as { url?: string })?.url;
+      const url = explicitUrl ?? getAmqpUrl();
+
       const required: Array<[string, boolean, string?]> = [];
-      required.push(['docker available', dockerAvailable()]);
-      const state = containerStatus();
-      required.push([`container state`, state === 'running', state]);
-      const url = getAmqpUrl();
-      const reachable = state === 'running' ? await isReachable(url) : false;
-      required.push([`broker reachable at ${url}`, reachable]);
+
+      if (explicitUrl) {
+        // Remote/cloud endpoint — Docker checks not applicable
+        const reachable = await isReachable(url);
+        required.push([`broker reachable at ${url}`, reachable]);
+      } else {
+        required.push(['docker available', dockerAvailable()]);
+        const state = containerStatus();
+        required.push([`container state`, state === 'running', state]);
+        const reachable = state === 'running' ? await isReachable(url) : false;
+        required.push([`broker reachable at ${url}`, reachable]);
+      }
+
       required.push(['~/.cbroker exists', existsSync(CBROKER_HOME)]);
       required.push([
         'claude binary on PATH',
         spawnSync('claude', ['--version'], { stdio: 'pipe' }).status === 0,
       ]);
 
-      // Informational only — only meaningful inside a wrapped session
       const inSession = !!process.env.CBROKER_NAME;
       const info: Array<[string, string]> = [];
       info.push(['CBROKER_NAME', process.env.CBROKER_NAME ?? '(unset — not inside a wrapped session)']);
-      info.push(['CBROKER_URL',  process.env.CBROKER_URL  ?? '(unset — not inside a wrapped session)']);
+      info.push(['CBROKER_URL', process.env.CBROKER_URL ?? '(unset — not inside a wrapped session)']);
+      if (explicitUrl) info.push(['--url (CLI flag)', explicitUrl]);
 
       let failures = 0;
       for (const [label, ok, detail] of required) {

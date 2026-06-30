@@ -6,16 +6,17 @@ export function registerUi(program: Command): void {
   program
     .command('ui')
     .description('Open the LavinMQ management UI in a browser')
-    .action(async () => {
-      const url = getMgmtUrl();
+    .action(async (_opts, cmd) => {
+      const globalOpts = (cmd.parent?.opts() ?? {}) as { mgmtUrl?: string };
+      const url = globalOpts.mgmtUrl ?? getMgmtUrl();
       console.log(`Opening ${url}`);
       const platform = process.platform;
-      const cmd =
+      const opener =
         platform === 'darwin'
           ? 'open'
           : platform === 'win32'
             ? 'start'
             : 'xdg-open';
-      spawnSync(cmd, [url], { stdio: 'inherit', shell: platform === 'win32' });
+      spawnSync(opener, [url], { stdio: 'inherit', shell: platform === 'win32' });
     });
 }

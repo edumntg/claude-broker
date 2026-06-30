@@ -27,7 +27,11 @@ program
   .name('cbroker')
   .description('AMQP-based inter-session messaging for Claude Code')
   .version(pkg.version)
-  .enablePositionalOptions(true);
+  .enablePositionalOptions(true)
+  .option('--url <url>', 'AMQP broker URL (overrides $CBROKER_URL)')
+  .option('--mgmt-url <url>', 'Management API URL (overrides $CBROKER_MGMT_URL)')
+  .option('--mgmt-user <user>', 'Management API user (overrides $CBROKER_MGMT_USER)')
+  .option('--mgmt-pass <pass>', 'Management API password (overrides $CBROKER_MGMT_PASS)');
 
 registerStart(program);
 registerStop(program);

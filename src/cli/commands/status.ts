@@ -7,9 +7,17 @@ export function registerStatus(program: Command): void {
   program
     .command('status')
     .description('Show broker status')
-    .action(async () => {
+    .action(async (_opts, cmd) => {
+      const explicitUrl = (cmd.parent?.opts() as { url?: string })?.url;
+      const url = explicitUrl ?? getAmqpUrl();
+
+      if (explicitUrl) {
+        const ok = await isReachable(url);
+        console.log(ok ? `cbroker: reachable at ${url}` : `cbroker: not reachable at ${url}`);
+        return;
+      }
+
       const state = containerStatus();
-      const url = getAmqpUrl();
       if (state === 'running') {
         const ok = await isReachable(url);
         console.log(

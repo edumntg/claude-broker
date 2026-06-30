@@ -12,7 +12,6 @@ const INJECT_SUBMIT_DELAY_MS = 25;
 export function registerWrap(program: Command): void {
   program
     .option('--name <name>', 'Session name (used as queue name)')
-    .option('--url <url>', 'AMQP broker URL')
     .option('--ttl <ms>', 'Message TTL in milliseconds')
     .option('--no-fallback', 'Exit with error if broker is unreachable')
     .option('--exclusive', 'Fail if queue already exists')

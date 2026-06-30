@@ -1,13 +1,22 @@
 import type { Command } from 'commander';
 import { getMgmtUrl, getMgmtAuth, EXCHANGE_NAME } from '../../lib/config.js';
 
+interface GlobalOpts {
+  mgmtUrl?: string;
+  mgmtUser?: string;
+  mgmtPass?: string;
+}
+
 export function registerList(program: Command): void {
   program
     .command('list')
     .description('List queues bound to the cbroker exchange (active sessions)')
-    .action(async () => {
-      const base = getMgmtUrl();
-      const { user, pass } = getMgmtAuth();
+    .action(async (_opts, cmd) => {
+      const globalOpts = (cmd.parent?.opts() ?? {}) as GlobalOpts;
+      const { user: defaultUser, pass: defaultPass } = getMgmtAuth();
+      const base = globalOpts.mgmtUrl ?? getMgmtUrl();
+      const user = globalOpts.mgmtUser ?? defaultUser;
+      const pass = globalOpts.mgmtPass ?? defaultPass;
       const auth = 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64');
 
       let queues: Array<{
@@ -22,6 +31,7 @@ export function registerList(program: Command): void {
         queues = (await res.json()) as typeof queues;
       } catch (err) {
         console.error(`cbroker: management API unreachable at ${base}: ${(err as Error).message}`);
+        console.error(`cbroker: use --mgmt-url to specify a remote management API URL`);
         process.exit(1);
       }
 

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { normalizeName } from '../../lib/name.js';
 import { publishOne } from '../../lib/amqp.js';
+import { getAmqpUrl } from '../../lib/config.js';
 
 export function registerSend(program: Command): void {
   program
@@ -17,7 +18,8 @@ export function registerSend(program: Command): void {
     .option('--correlation-id <id>', 'Correlation ID for request/response')
     .option('--priority <p>', 'low | normal | high', 'normal')
     .option('--meta <k=v>', 'Metadata key=value (repeatable)', collect, [])
-    .action(async (opts) => {
+    .action(async (opts, cmd) => {
+      const url = (cmd.parent?.opts() as { url?: string })?.url ?? getAmqpUrl();
       const to = normalizeName(opts.to);
       const from = normalizeName(opts.from);
 
@@ -61,7 +63,7 @@ export function registerSend(program: Command): void {
           correlation_id: opts.correlationId,
           priority: opts.priority,
           metadata: Object.keys(metadata).length ? metadata : undefined,
-        });
+        }, url);
         console.log(`cbroker: sent ${msg.id} -> ${to}`);
       } catch (err) {
         console.error(`cbroker: send failed: ${(err as Error).message}`);

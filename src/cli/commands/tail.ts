@@ -1,19 +1,21 @@
 import type { Command } from 'commander';
 import { normalizeName } from '../../lib/name.js';
 import { connect, declareTopology } from '../../lib/amqp.js';
+import { getAmqpUrl } from '../../lib/config.js';
 
 export function registerTail(program: Command): void {
   program
     .command('tail <name>')
     .description('Watch messages on a queue (consumes! use with care)')
     .option('--no-ack', 'Do not ack messages (peek mode, requeues on exit)')
-    .action(async (name: string, opts) => {
+    .action(async (name: string, opts, cmd) => {
+      const url = (cmd.parent?.opts() as { url?: string })?.url ?? getAmqpUrl();
       const queue = normalizeName(name);
-      const conn = await connect();
+      const conn = await connect({ url });
       const ch = await conn.createChannel();
       await declareTopology(ch, queue);
 
-      console.log(`cbroker: tailing '${queue}' (Ctrl+C to stop)\n`);
+      console.log(`cbroker: tailing '${queue}' on ${url} (Ctrl+C to stop)\n`);
 
       const ackMode = opts.ack !== false;
       const handler = await ch.consume(

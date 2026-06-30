@@ -138,6 +138,44 @@ That message will pop into Terminal B's Claude as `[cbroker peer message from=de
 
 ## CLI reference
 
+### Global options
+
+These flags go **before** the subcommand name and apply to every command.
+
+| Option | Purpose | Default |
+|---|---|---|
+| `--url <amqp-uri>` | AMQP broker URL. Supports `amqp://` and `amqps://` (TLS), including vhosts: `amqps://user:pass@host/vhost`. Overrides `$CBROKER_URL`. | `amqp://localhost:5672` |
+| `--mgmt-url <url>` | LavinMQ management API base URL. Overrides `$CBROKER_MGMT_URL`. | `http://localhost:15672` |
+| `--mgmt-user <user>` | Management API username. Overrides `$CBROKER_MGMT_USER`. | `guest` |
+| `--mgmt-pass <pass>` | Management API password. Overrides `$CBROKER_MGMT_PASS`. | `guest` |
+
+#### Connecting to a cloud LavinMQ cluster (e.g. CloudAMQP)
+
+```bash
+# Set once in your environment:
+export CBROKER_URL="amqps://ixpqijvz:secret@campbell.lmq.cloudamqp.com/ixpqijvz"
+
+# Or pass inline to any command:
+cbroker --url amqps://ixpqijvz:secret@campbell.lmq.cloudamqp.com/ixpqijvz status
+cbroker --url amqps://ixpqijvz:secret@campbell.lmq.cloudamqp.com/ixpqijvz --name myagent claude
+cbroker --url amqps://ixpqijvz:secret@campbell.lmq.cloudamqp.com/ixpqijvz send --to alice -m "hello"
+```
+
+When `--url` points to a remote endpoint, `cbroker status` and `cbroker doctor` skip Docker checks automatically — only AMQP reachability is tested.
+
+`cbroker list` and `cbroker ui` hit the management API, so also pass the management options:
+
+```bash
+cbroker \
+  --url amqps://ixpqijvz:secret@campbell.lmq.cloudamqp.com/ixpqijvz \
+  --mgmt-url https://campbell.lmq.cloudamqp.com \
+  --mgmt-user ixpqijvz \
+  --mgmt-pass secret \
+  list
+```
+
+---
+
 ### Broker lifecycle
 
 | Command | What it does |
@@ -172,7 +210,7 @@ Wrap flags (placed before `claude`):
 | Flag | Purpose |
 |---|---|
 | `--name <name>` | **Required.** Session name. |
-| `--url <amqp-url>` | Override broker URL. Default `amqp://localhost:5672`. |
+| `--url <amqp-uri>` | AMQP broker URL (global option — see [Global options](#global-options)). |
 | `--ttl <ms>` | Per-queue message TTL. Default 24h. |
 | `--no-fallback` | Exit non-zero if broker is unreachable. |
 | `--exclusive` | Fail if queue already exists (CI). |
@@ -418,7 +456,7 @@ cbroker nuke --yes        ─►   docker compose down -v && docker volume rm
 - **One name per session.** Sharing a queue across two `cbroker` sessions means each message goes to one consumer (load-balancing), not both.
 - **`claude` binary must be on PATH.** `cbroker --name X claude` calls `pty.spawn('claude', …)`. If you have an alias, set up a real symlink instead.
 - **macOS / Linux only (today).** Windows PTY support via node-pty exists but is untested here.
-- **localhost-only broker by default.** For multi-machine setups, expose LavinMQ + auth yourself and set `--url`. Out of scope for v1.
+- **Cloud LavinMQ supported.** Pass `--url amqps://user:pass@host/vhost` (or set `$CBROKER_URL`) to connect to any AMQP/AMQPS endpoint, including cloud providers such as CloudAMQP. Docker is only required for the local broker lifecycle commands (`start`, `stop`, `restart`, `logs`, `nuke`).
 
 ---
 
